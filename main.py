@@ -1,13 +1,13 @@
 import torch 
 import numpy as np 
 import argparse
-from torch_geometric.datasets import Flickr 
 from torch_geometric.loader import GraphSAINTRandomWalkSampler
 from torch_geometric.nn import GraphConv
 from torch_geometric.utils import degree
 import torch.nn.functional as F
 import os
 from torch_sparse import spmm
+import dataset
 
 
 """
@@ -24,15 +24,16 @@ https://github.com/rusty1s/pytorch_scatter/issues/241
 device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
 
 parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
-parser.add_argument('--dataset', type=str)
+parser.add_argument('--dataset', type=str, default="Flickr")
 parser.add_argument('--method', type=str)
 
 args = parser.parse_args()
 print(args)
 
 
-path = f"{os.path.dirname(__file__)}/dataset/Flickr"
-dataset = Flickr(path)
+path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
+dataset = dataset.load_dataset(args.dataset, path)
+
 data = dataset[0]
 row, col = data.edge_index
 
@@ -111,8 +112,7 @@ def test():
 for epoch in range(1, 51):
     loss = train()
     accs = test()
-    print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, Train: {accs[0]:.4f}, '
-          f'Val: {accs[1]:.4f}, Test: {accs[2]:.4f}')
+    print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}')
 
 
 
