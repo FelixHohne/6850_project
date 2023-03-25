@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import os
 from torch_sparse import spmm
 import dataset
+import models
 
 
 """
@@ -44,41 +45,13 @@ loader = GraphSAINTRandomWalkSampler(data, batch_size=6000, walk_length=2,
                                      num_workers=0)
 
 
-class Net(torch.nn.Module):
-    def __init__(self, hidden_channels):
-        super().__init__()
-        in_channels = dataset.num_node_features
-        out_channels = dataset.num_classes
-        self.conv1 = GraphConv(in_channels, hidden_channels)
-        self.conv2 = GraphConv(hidden_channels, hidden_channels)
-        self.conv3 = GraphConv(hidden_channels, hidden_channels)
-        self.lin = torch.nn.Linear(3 * hidden_channels, out_channels)
-
-    def set_aggr(self, aggr):
-        self.conv1.aggr = aggr
-        self.conv2.aggr = aggr
-        self.conv3.aggr = aggr
-
-    def forward(self, x0, edge_index, edge_weight=None):
-        x1 = F.relu(self.conv1(x0, edge_index, edge_weight))
-        x1 = F.dropout(x1, p=0.2, training=self.training)
-        x2 = F.relu(self.conv2(x1, edge_index, edge_weight))
-        x2 = F.dropout(x2, p=0.2, training=self.training)
-        x3 = F.relu(self.conv3(x2, edge_index, edge_weight))
-        x3 = F.dropout(x3, p=0.2, training=self.training)
-        x = torch.cat([x1, x2, x3], dim=-1)
-        x = self.lin(x)
-        return x.log_softmax(dim=-1)
-
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = Net(hidden_channels=256).to(device)
+model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 
 def train():
     model.train()
-    model.set_aggr('add')
 
     total_loss = total_examples = 0
     for data in loader:
@@ -97,7 +70,6 @@ def train():
 @torch.no_grad()
 def test():
     model.eval()
-    model.set_aggr('mean')
 
     out = model(data.x.to(device), data.edge_index.to(device))
     pred = out.argmax(dim=-1)
@@ -109,10 +81,12 @@ def test():
     return accs
 
 
+
 for epoch in range(1, 51):
     loss = train()
     accs = test()
-    print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}')
+    # TODO: Double check which of the 3 types of accuracies EllipticBitcoin is missing
+    print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, valid acc: {accs[1]:04f}')
 
 
 
