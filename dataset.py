@@ -10,20 +10,19 @@ import pickle
 from typing import Optional, Callable, List
 import numpy as np 
 import os.path as osp
+from torch_geometric.loader import DataLoader
+
+
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 device = torch.device("cpu")
-
 
 def load_dataset(dataset, path):
     if dataset == "Flickr":
         dataset = Flickr(path)
     elif dataset == "EllipticBitcoinDataset":
         dataset = EllipticBitcoinDataset(path)
-    # elif dataset == 'StarGraph':
-    #     pass 
-        # dataset = StarDataset(path)
     else:
         raise ValueError
     return dataset 
@@ -44,11 +43,31 @@ def get_idx_split(label, tr_prop = 0.5, val_prop = 0.25):
     return indices[0:highest_tr_node], indices[highest_tr_node:highest_val_node], indices[highest_val_node:]
 
 
+def erdos_renyi_as_graph_data(n, p, num_features, num_classes):
+    G = nx.erdos_renyi_graph(n, p)
+    print(G.number_of_nodes())
+    num_nodes = n 
+    X = torch.rand((num_nodes, num_features))
+    label = torch.randint(0, num_classes, (num_nodes, ))
+    edge_index = torch.tensor(nx.to_pandas_edgelist(G).to_numpy().T)
+    print("We are edge:", edge_index)
+    train_idx, valid_idx, test_idx = get_idx_split(label)
+    data = Data(x=X, edge_index=edge_index, y = label)
+    data.train_mask = train_idx 
+    data.valid_mask = valid_idx 
+    data.test_mask = test_idx 
+    data.num_node_features = num_nodes
+
+    return data 
+
+
 # Generates the star graph with n + 1 edges and n nodes
-def star_graph_as_pyg_data(num_nodes, num_features, num_classes):
-    G = nx.star_graph(num_nodes)
+def star_graph_as_pyg_data(n, num_features, num_classes):
+    G = nx.star_graph(n)
+    num_nodes = n + 1 # n + 1 nodes for star graph with n tentacles
     X = torch.rand((num_nodes, num_features))
     label = torch.randint(0, num_classes, (num_nodes,))
+    print(torch.tensor(nx.to_pandas_edgelist(G).to_numpy()).T)
     edge_index = torch.tensor(nx.to_pandas_edgelist(G).to_numpy().T)
 
     train_idx, valid_idx, test_idx = get_idx_split(label)
@@ -59,7 +78,20 @@ def star_graph_as_pyg_data(num_nodes, num_features, num_classes):
 
     return data 
 
-star_graph_as_pyg_data(100, 10, 3)
+    # @property 
+    # def processed_file_names(self):
+    #     return 'star_dataset.pt'
+    
+    # def download(self):
+    #     path = osp.join(self.raw_dir, 'star.pkl')
+    #     graph = star_graph_as_pyg_data(100, 10, 3)
+    #     pickle.save(graph, path)
+    
+    # def process(self):
+    #     load_path = osp.join(self.raw_dir, 'star.pkl')
+    #     data = pickle.load(load_path)
+
+
 
 
 class AmazonProducts(InMemoryDataset):
@@ -135,18 +167,7 @@ class AmazonProducts(InMemoryDataset):
         torch.save(self.collate([data]), self.processed_paths[0])
 
 
-# class StarDataset(InMemoryDataset):
-#     def __init__(self, root : str, transform=None, pre_transform=None, pre_filter=None):
-#         super().__init__(self, root, transform, pre_transform)
-#         print(self.raw_paths[0])
-    
-#     @property
-#     def raw_file_names(self):
-#         return 'star.pkl'
-    
-#     @property 
-#     def processed_file_names(self):
-#         return 'star_dataset.pt'
+
     
     # def download(self):
     #     print("running download")

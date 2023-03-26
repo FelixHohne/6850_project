@@ -1,7 +1,7 @@
 import torch 
 import numpy as np 
 import argparse
-from torch_geometric.loader import GraphSAINTRandomWalkSampler
+from torch_geometric.loader import GraphSAINTRandomWalkSampler, DataLoader
 from torch_geometric.nn import GraphConv
 from torch_geometric.utils import degree
 import torch.nn.functional as F
@@ -22,30 +22,31 @@ https://github.com/rusty1s/pytorch_scatter/issues/241
 # Guide to GraphSAINT sampling https://github.com/pyg-team/pytorch_geometric/blob/master/examples/graph_saint.py
 device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
 
-parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
-parser.add_argument('--dataset', type=str, default="Flickr")
-parser.add_argument('--method', type=str)
+# parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
+# parser.add_argument('--dataset', type=str, default="Flickr")
+# parser.add_argument('--method', type=str)
 
-args = parser.parse_args()
-print(args)
+# args = parser.parse_args()
+# print(args)
 
-path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
-dataset = dataset.load_dataset(args.dataset, path)
+# path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
+# dataset = dataset.load_dataset(args.dataset, path)
 
-data = dataset[0]
+# data = dataset[0]
 
-print("Edge index")
-print(data)
-print(type(data.edge_index))
-print(data.edge_index.shape)
+
+data = dataset.erdos_renyi_as_graph_data(800, 0.5, 10, 3)
+
+# data = dataset.star_graph_as_pyg_data(3, 10, 3)
+
 row, col = data.edge_index
 
+# loader = GraphSAINTRandomWalkSampler(data, batch_size=6000, walk_length=2,
+#                                      num_steps=5, sample_coverage=100,
+#                                      save_dir=dataset.processed_dir,
+#                                      num_workers=0)
 
-loader = GraphSAINTRandomWalkSampler(data, batch_size=6000, walk_length=2,
-                                     num_steps=5, sample_coverage=100,
-                                     save_dir=dataset.processed_dir,
-                                     num_workers=0)
-
+loader = GraphSAINTRandomWalkSampler(data, batch_size=60, walk_length=2)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
