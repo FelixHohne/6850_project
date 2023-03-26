@@ -10,9 +10,7 @@ from torch_sparse import spmm
 import dataset
 import models
 
-
 """
-
 Note: may need to follow pythonpanda2's installation instructions for torch_sparse. 
 ARM Macs are considered to be CPU installations. The instructions are for an older PyTorch version, so for 1.13.1, try this: 
 i.e. for PyTorch 1.13.1:
@@ -25,17 +23,21 @@ https://github.com/rusty1s/pytorch_scatter/issues/241
 device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
 
 parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
-parser.add_argument('--dataset', type=str, default="Flickr")
+parser.add_argument('--dataset', type=str, default="StarGraph")
 parser.add_argument('--method', type=str)
 
 args = parser.parse_args()
 print(args)
 
-
 path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
 dataset = dataset.load_dataset(args.dataset, path)
 
 data = dataset[0]
+
+print("Edge index")
+print(data)
+print(type(data.edge_index))
+print(data.edge_index.shape)
 row, col = data.edge_index
 
 
@@ -52,7 +54,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 def train():
     model.train()
-
     total_loss = total_examples = 0
     for data in loader:
         data = data.to(device)
@@ -70,7 +71,6 @@ def train():
 @torch.no_grad()
 def test():
     model.eval()
-
     out = model(data.x.to(device), data.edge_index.to(device))
     pred = out.argmax(dim=-1)
     correct = pred.eq(data.y.to(device))
