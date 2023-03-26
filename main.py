@@ -23,7 +23,7 @@ https://github.com/rusty1s/pytorch_scatter/issues/241
 device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
 
 parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
-parser.add_argument('--dataset', type=str, default="StarGraph")
+parser.add_argument('--dataset', type=str, default="Flickr")
 parser.add_argument('--method', type=str)
 
 args = parser.parse_args()

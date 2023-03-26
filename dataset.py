@@ -21,8 +21,8 @@ def load_dataset(dataset, path):
         dataset = Flickr(path)
     elif dataset == "EllipticBitcoinDataset":
         dataset = EllipticBitcoinDataset(path)
-    elif dataset == 'StarGraph':
-        pass 
+    # elif dataset == 'StarGraph':
+    #     pass 
         # dataset = StarDataset(path)
     else:
         raise ValueError
@@ -135,18 +135,18 @@ class AmazonProducts(InMemoryDataset):
         torch.save(self.collate([data]), self.processed_paths[0])
 
 
-class StarDataset(InMemoryDataset):
-    def __init__(self, root : str, transform=None, pre_transform=None, pre_filter=None):
-        super().__init__(self, root, transform, pre_transform)
-        print(self.raw_paths[0])
+# class StarDataset(InMemoryDataset):
+#     def __init__(self, root : str, transform=None, pre_transform=None, pre_filter=None):
+#         super().__init__(self, root, transform, pre_transform)
+#         print(self.raw_paths[0])
     
-    @property
-    def raw_file_names(self):
-        return 'star.pkl'
+#     @property
+#     def raw_file_names(self):
+#         return 'star.pkl'
     
-    @property 
-    def processed_file_names(self):
-        return 'star_dataset.pt'
+#     @property 
+#     def processed_file_names(self):
+#         return 'star_dataset.pt'
     
     # def download(self):
     #     print("running download")
@@ -164,7 +164,5 @@ class StarDataset(InMemoryDataset):
     #                os.path.join(self.processed_dir, 'star_dataset.pt'))
         
     
-
-StarDataset(f"{os.path.dirname(__file__)}/dataset/{StarDataset}")
 
 # AmazonProducts(f"{os.path.dirname(__file__)}/dataset/{AmazonProducts}")
