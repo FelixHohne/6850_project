@@ -18,6 +18,16 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 device = torch.device("cpu")
 
+
+def load_data(data_name):
+    if data_name == 'ErdosRenyi':
+        print("Running Erdos Renyi")
+        return erdos_renyi_as_graph_data(1000, 0.5, 10, 3)
+    else:
+        raise ValueError
+
+
+
 def load_dataset(dataset, path):
     if dataset == "Flickr":
         dataset = Flickr(path)
@@ -27,11 +37,6 @@ def load_dataset(dataset, path):
         raise ValueError
     return dataset 
 
-def load_data(data_name):
-    if data_name == 'star_graph':
-        return star_graph_as_pyg_data(100, 10, 3)
-    else:
-        raise ValueError
 
 def get_idx_split(label, tr_prop = 0.5, val_prop = 0.25):
     num_nodes = label.shape[0]
@@ -40,23 +45,34 @@ def get_idx_split(label, tr_prop = 0.5, val_prop = 0.25):
     highest_tr_node = math.floor(tr_prop * num_nodes) 
     highest_val_node = math.floor((tr_prop + val_prop) * num_nodes)
 
-    return indices[0:highest_tr_node], indices[highest_tr_node:highest_val_node], indices[highest_val_node:]
+    train_indices = torch.zeros(label.size())
+    train_indices[indices[0:highest_tr_node]] = True 
+
+    valid_indices = torch.zeros(label.size())
+    valid_indices[indices[highest_tr_node:highest_val_node]] = True 
+
+    test_indices = torch.zeros(label.size())
+    test_indices[indices[highest_val_node:]] = True 
+
+    print(valid_indices)
+
+    return train_indices, valid_indices, test_indices
 
 
 def erdos_renyi_as_graph_data(n, p, num_features, num_classes):
     G = nx.erdos_renyi_graph(n, p)
-    print(G.number_of_nodes())
     num_nodes = n 
     X = torch.rand((num_nodes, num_features))
     label = torch.randint(0, num_classes, (num_nodes, ))
     edge_index = torch.tensor(nx.to_pandas_edgelist(G).to_numpy().T)
-    print("We are edge:", edge_index)
     train_idx, valid_idx, test_idx = get_idx_split(label)
+    print(train_idx.shape)
     data = Data(x=X, edge_index=edge_index, y = label)
     data.train_mask = train_idx 
     data.valid_mask = valid_idx 
     data.test_mask = test_idx 
     data.num_node_features = num_nodes
+    data.num_classes = num_classes
 
     return data 
 

@@ -10,46 +10,34 @@ from torch_sparse import spmm
 import dataset
 import models
 
-"""
-Note: may need to follow pythonpanda2's installation instructions for torch_sparse. 
-ARM Macs are considered to be CPU installations. The instructions are for an older PyTorch version, so for 1.13.1, try this: 
-i.e. for PyTorch 1.13.1:
-MACOSX_DEPLOYMENT_TARGET=12.3 CC=clang CXX=clang++ python -m pip --no-cache-dir  install  torch-scatter -f https://data.pyg.org/whl/torch-1.31.1+${cpu}.html
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-https://github.com/rusty1s/pytorch_scatter/issues/241
+parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
+parser.add_argument('--dataset', type=str, default="Flickr")
+parser.add_argument('--method', type=str)
 
-"""
-# Guide to GraphSAINT sampling https://github.com/pyg-team/pytorch_geometric/blob/master/examples/graph_saint.py
-device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+args = parser.parse_args()
+print(args)
 
-# parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
-# parser.add_argument('--dataset', type=str, default="Flickr")
-# parser.add_argument('--method', type=str)
-
-# args = parser.parse_args()
-# print(args)
-
-# path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
-# dataset = dataset.load_dataset(args.dataset, path)
-
-# data = dataset[0]
-
-
-data = dataset.erdos_renyi_as_graph_data(800, 0.5, 10, 3)
-
-# data = dataset.star_graph_as_pyg_data(3, 10, 3)
+built_in = ("Flickr", "EllipticBitcoinDataset")
+if args.dataset in built_in:
+    path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
+    dataset = dataset.load_dataset(args.dataset, path)
+    data = dataset[0]
+else:
+    data = dataset.load_data(args.dataset)
 
 row, col = data.edge_index
 
-# loader = GraphSAINTRandomWalkSampler(data, batch_size=6000, walk_length=2,
-#                                      num_steps=5, sample_coverage=100,
-#                                      save_dir=dataset.processed_dir,
-#                                      num_workers=0)
 
-loader = GraphSAINTRandomWalkSampler(data, batch_size=60, walk_length=2)
+print("Big data:", data.y.shape, data.train_mask.shape, data.train_mask[:10])
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
+loader = GraphSAINTRandomWalkSampler(data, batch_size=100, walk_length=2)
+
+if args.dataset in built_in:
+    model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
+else:
+    model = models.GNNNetwork(data.num_node_features, hidden_channels=256, out_channels=data.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 
@@ -60,34 +48,35 @@ def train():
         data = data.to(device)
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
-        loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
+        # print("Out shape: ", out.shape, data.train_mask.shape, data.x.shape)
+        # loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
 
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item() * data.num_nodes
-        total_examples += data.num_nodes
-    return total_loss / total_examples
+        # loss.backward()
+        # optimizer.step()
+        # total_loss += loss.item() * data.num_nodes
+        # total_examples += data.num_nodes
+    # return total_loss / total_examples
 
 
-@torch.no_grad()
-def test():
-    model.eval()
-    out = model(data.x.to(device), data.edge_index.to(device))
-    pred = out.argmax(dim=-1)
-    correct = pred.eq(data.y.to(device))
+# @torch.no_grad()
+# def test():
+#     model.eval()
+#     out = model(data.x.to(device), data.edge_index.to(device))
+#     pred = out.argmax(dim=-1)
+#     correct = pred.eq(data.y.to(device))
 
-    accs = []
-    for _, mask in data('train_mask', 'val_mask', 'test_mask'):
-        accs.append(correct[mask].sum().item() / mask.sum().item())
-    return accs
+#     accs = []
+#     for _, mask in data('train_mask', 'val_mask', 'test_mask'):
+#         accs.append(correct[mask].sum().item() / mask.sum().item())
+#     return accs
 
 
 
 for epoch in range(1, 51):
     loss = train()
-    accs = test()
-    # TODO: Double check which of the 3 types of accuracies EllipticBitcoin is missing
-    print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, valid acc: {accs[1]:04f}')
+    # accs = test()
+    # # TODO: Double check which of the 3 types of accuracies EllipticBitcoin is missing
+    # print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, valid acc: {accs[1]:04f}')
 
 
 
