@@ -18,26 +18,24 @@ os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 device = torch.device("cpu")
 
-
-def load_data(data_name):
-    if data_name == 'ErdosRenyi':
-        print("Running Erdos Renyi")
-        return erdos_renyi_as_graph_data(1000, 0.75, 10, 3)
-    else:
-        raise ValueError
-
-
-
-def load_dataset(dataset, path):
-    if dataset == "Flickr":
-        dataset = Flickr(path)
-    elif dataset == "EllipticBitcoinDataset":
-        dataset = EllipticBitcoinDataset(path)
-    else:
-        raise ValueError
-    return dataset 
-
-
+from torch_geometric.data import InMemoryDataset
+from torch_geometric.utils import to_undirected
+import torch_geometric.transforms as T
+import torch_geometric
+import torch_sparse
+import pandas as pd
+import shutil, os
+import os.path as osp
+import requests
+import torch
+import numpy as np
+import networkx as nx
+import random
+from copy import deepcopy
+from collections import defaultdict
+import math
+import json
+import urllib.request
 
 def get_idx_split(label, tr_prop = 0.5, val_prop = 0.25):
     num_nodes = label.shape[0]
@@ -55,8 +53,6 @@ def get_idx_split(label, tr_prop = 0.5, val_prop = 0.25):
     test_indices = torch.zeros(label.size(), dtype=torch.bool)
     test_indices[indices[highest_val_node:]] = True 
 
-    print(valid_indices)
-
     return train_indices, valid_indices, test_indices
 
 def erdos_renyi_as_graph_data(n, p, num_features, num_classes):
@@ -66,15 +62,80 @@ def erdos_renyi_as_graph_data(n, p, num_features, num_classes):
     label = torch.randint(0, num_classes, (num_nodes, ))
     edge_index = torch.tensor(nx.to_pandas_edgelist(G).to_numpy().T)
     train_idx, valid_idx, test_idx = get_idx_split(label)
-    print(train_idx[:10])
     data = Data(x=X, edge_index=edge_index, y = label)
     data.train_mask = train_idx 
     data.valid_mask = valid_idx 
     data.test_mask = test_idx 
     data.num_node_features = num_nodes
     data.num_classes = num_classes
-
     return data 
+
+class ErdosRenyiDataset(InMemoryDataset):
+    def __init__(self, root = 'dataset/ErdosRenyi', transform=None, pre_transform=None):
+        '''
+            - name (str): name of the dataset
+            - root (str): root directory to store the dataset folder
+        '''
+        self.root = root
+        super(ErdosRenyiDataset, self).__init__(self.root, transform, pre_transform)
+        self.data, self.slices = torch.load(self.processed_paths[0])
+
+    @property
+    def processed_file_names(self):
+        files = ['erdos_renyi.pt']
+        return files
+
+    def process(self):
+        data = erdos_renyi_as_graph_data(10000, 0.5, 100, 10)
+        torch.save(self.collate([data]), self.processed_paths[0])
+
+    def __repr__(self):
+        return '{}()'.format(self.__class__.__name__)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def load_data(data_name):
+    if data_name == 'ErdosRenyi':
+        print("Running Erdos Renyi")
+        return erdos_renyi_as_graph_data(1000, 0.75, 10, 3)
+    else:
+        raise ValueError
+
+
+
+def load_dataset(dataset, path):
+    if dataset == "Flickr":
+        dataset = Flickr(path)
+    elif dataset == "EllipticBitcoinDataset":
+        dataset = EllipticBitcoinDataset(path)
+    elif dataset == "ErdosRenyi":
+        dataset = ErdosRenyiDataset()
+    else:
+        raise ValueError
+    return dataset 
+
+
+
+
 
 
 # Generates the star graph with n + 1 edges and n nodes

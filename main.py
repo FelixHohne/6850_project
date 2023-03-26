@@ -19,7 +19,7 @@ parser.add_argument('--method', type=str)
 args = parser.parse_args()
 print(args)
 
-built_in = ("Flickr", "EllipticBitcoinDataset")
+built_in = ("Flickr", "EllipticBitcoinDataset", "ErdosRenyi")
 if args.dataset in built_in:
     path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
     dataset = dataset.load_dataset(args.dataset, path)
@@ -27,9 +27,11 @@ if args.dataset in built_in:
 else:
     data = dataset.load_data(args.dataset)
 
+
+print("Max value: ", torch.max(data.edge_index), "Min value: ", torch.min(data.edge_index))
 row, col = data.edge_index
 
-loader = GraphSAINTRandomWalkSampler(data, batch_size=25, walk_length = 1)
+loader = GraphSAINTRandomWalkSampler(data, batch_size=100, walk_length = 1)
 
 if args.dataset in built_in:
     model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
@@ -45,15 +47,15 @@ def train():
     total_loss = total_examples = 0
     for data in loader:
         print(data) 
-        # data = data.to(device)
-        # optimizer.zero_grad()
-        # out = model(data.x, data.edge_index)
-        # loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
-        # loss.backward()
-        # optimizer.step()
-        # total_loss += loss.item() * data.num_nodes
-        # total_examples += data.num_nodes
-    # return total_loss / total_examples
+        data = data.to(device)
+        optimizer.zero_grad()
+        out = model(data.x, data.edge_index)
+        loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item() * data.num_nodes
+        total_examples += data.num_nodes
+    return total_loss / total_examples
 
 
 @torch.no_grad()
@@ -72,9 +74,9 @@ def test():
 
 for epoch in range(1, 51):
     loss = train()
-    # accs = test()
-    # # # TODO: Double check which of the 3 types of accuracies EllipticBitcoin is missing
-    # print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, valid acc: {accs[1]:04f}')
+    accs = test()
+    # # TODO: Double check which of the 3 types of accuracies EllipticBitcoin is missing
+    print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, valid acc: {accs[1]:04f}')
 
 
 
