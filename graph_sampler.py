@@ -4,7 +4,7 @@ import argparse
 import random
 from torch_geometric.data import GraphSAINTSampler
 from torch_geometric.nn import GraphConv
-from torch_geometric.utils import degree, add_self_loops
+from torch_geometric.utils import degree
 import torch.nn.functional as F
 import os
 from torch_sparse import spmm
@@ -23,7 +23,6 @@ class MetropolisHastingsSampler(GraphSAINTSampler):
     def __init__(self, data, batch_size: int, budget: int,
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
-        self.adj_with_self_loops = add_self_loops(self.adj)
         self.budget = budget
         super(MetropolisHastingsSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
@@ -39,11 +38,11 @@ class MetropolisHastingsSampler(GraphSAINTSampler):
         node_idx = list(start)
         for _ in range(self.budget):
             for i, node in enumerate(start):
-                neighbors = self.adj_with_self_loops[node.item()]
+                neighbors = self.adj[node.item()]
                 d_i = neighbors.storage.col().shape[0]
                 neighbor_idx = random.randint(0, d_i-1)
                 u_idx = neighbors.storage.col()[neighbor_idx].item()
-                d_u = self.adj_with_self_loops[u_idx].storage.col().shape[0]
+                d_u = self.adj[u_idx].storage.col().shape[0]
                 r = random.uniform(0,1)
 
                 if r < (d_u/d_i):
