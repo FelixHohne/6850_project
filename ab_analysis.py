@@ -51,6 +51,6 @@ edges = nx.draw_networkx_edges(G, pos)
 
 print("Saving figure")
 
-plt.savefig(f'ab_224_2_is_metropolis_hastings_{use_metropolis_hastings}.png', bbox_inches='tight', dpi=600)
+plt.savefig(f'ab_224_2_is_metropolis_hastings_{use_metropolis_hastings}.png', bbox_inches='tight', dpi=300)
 
 
