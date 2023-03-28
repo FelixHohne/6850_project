@@ -46,7 +46,7 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
                 d_u = self.adj[u_idx].storage.col().shape[0]
                 r = random.uniform(0,1)
 
-                if r < (d_u/d_i):
+                if r < (d_i/d_u):
                     start[i] = u_idx
                 node_idx.append(start[i]) 
                 
