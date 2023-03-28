@@ -30,11 +30,13 @@ if dataset == "BarabasiAlbert":
   if args.sampler == "srw":
       loader = GraphSAINTRandomWalkSampler(data, batch_size=47, walk_length = 2)
   elif args.sampler == "mhrw":
-      loader = GraphSAINTRandomWalkSampler(data, batch_size=47, walk_length = 2)
+      print("executing mhrw")
+      loader = graph_sampler.MetropolisHastingsRandomWalkSampler(data, batch_size=47, walk_length = 2)
 else:
     if args.sampler == "srw":
         loader = GraphSAINTRandomWalkSampler(data, batch_size=100, walk_length = 2)
     else:
+        print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(data, batch_size = 100, budget = 2)
 
 model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
@@ -45,7 +47,6 @@ def train():
     total_loss = total_examples = 0
     for data in loader:
         print(data) 
-        print(torch.max(data.edge_index))
         data = data.to(device)
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
