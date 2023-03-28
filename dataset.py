@@ -45,6 +45,44 @@ def erdos_renyi_as_graph_data(n, p, num_features, num_classes):
     data.num_classes = num_classes
     return data 
 
+def barabasi_albert(n, m, num_features, num_classes):
+    G = nx.barabasi_albert_graph(n, m)
+    num_nodes = n 
+    X = torch.rand((num_nodes, num_features))
+    label = torch.randint(0, num_classes, (num_nodes, ))
+    edge_index = torch.tensor(nx.to_pandas_edgelist(G).to_numpy().T)
+    train_idx, valid_idx, test_idx = get_idx_split(label)
+    data = Data(x=X, edge_index=edge_index, y = label)
+    data.train_mask = train_idx 
+    data.valid_mask = valid_idx 
+    data.test_mask = test_idx 
+    data.num_node_features = num_nodes
+    data.num_classes = num_classes
+    return data 
+
+class BarabasiAlbertDataset(InMemoryDataset):
+    def __init__(self, root = 'dataset/BarabasiAlbert', transform=None, pre_transform=None):
+        '''
+            - name (str): name of the dataset
+            - root (str): root directory to store the dataset folder
+        '''
+        self.root = root
+        super(BarabasiAlbertDataset, self).__init__(self.root, transform, pre_transform)
+        self.data, self.slices = torch.load(self.processed_paths[0])
+
+    @property
+    def processed_file_names(self):
+        files = ['barabasi_albert.pt']
+        return files
+
+    def process(self):
+        data = barabasi_albert(224, 2, 100, 10)
+        torch.save(self.collate([data]), self.processed_paths[0])
+
+    def __repr__(self):
+        return '{}()'.format(self.__class__.__name__)
+
+
 class ErdosRenyiDataset(InMemoryDataset):
     def __init__(self, root = 'dataset/ErdosRenyi', transform=None, pre_transform=None):
         '''
@@ -75,6 +113,8 @@ def load_dataset(dataset, path):
         dataset = EllipticBitcoinDataset(path)
     elif dataset == "ErdosRenyi":
         dataset = ErdosRenyiDataset()
+    elif dataset == "BarabasiAlbert":
+        dataset = BarabasiAlbertDataset(path)
     else:
         raise ValueError
     return dataset 
