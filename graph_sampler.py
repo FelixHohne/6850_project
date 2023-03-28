@@ -4,7 +4,7 @@ import argparse
 import random
 from torch_geometric.data import GraphSAINTSampler
 from torch_geometric.nn import GraphConv
-from torch_geometric.utils import degree
+from torch_geometric.utils import degree, add_self_loops
 import torch.nn.functional as F
 import os
 from torch_sparse import spmm
@@ -24,6 +24,7 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
+        data['edge_index'] = add_self_loops(data['edge_index'])[0]
         super(MetropolisHastingsRandomWalkSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
