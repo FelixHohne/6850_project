@@ -5,12 +5,14 @@ import torch.nn.functional as F
 import os
 import dataset
 import models
+import graph_sampler
 
 device = torch.device('cpu')
 
 parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
 parser.add_argument('--dataset', type=str, default="ErdosRenyi")
 parser.add_argument('--method', type=str)
+parser.add_argument("--sampler", type=str, default="srw")
 
 args = parser.parse_args()
 print(args)
@@ -24,14 +26,16 @@ data = dataset[0]
 row, col = data.edge_index
 
 
-print("loaded data")
-
-
 if dataset == "BarabasiAlbert":
-    loader = GraphSAINTRandomWalkSampler(data, batch_size=47, walk_length = 2)
-    print("Constructed RandomWalkSampler")
+  if args.sampler == "srw":
+      loader = GraphSAINTRandomWalkSampler(data, batch_size=47, walk_length = 2)
+  elif args.sampler == "mhrw":
+      loader = GraphSAINTRandomWalkSampler(data, batch_size=47, walk_length = 2)
 else:
-    loader = GraphSAINTRandomWalkSampler(data, batch_size=100, walk_length = 2)
+    if args.sampler == "srw":
+        loader = GraphSAINTRandomWalkSampler(data, batch_size=100, walk_length = 2)
+    else:
+        loader = graph_sampler.MetropolisHastingsRandomWalkSampler(data, batch_size = 100, budget = 2)
 
 model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
