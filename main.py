@@ -17,11 +17,21 @@ print(args)
 
 path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
 dataset = dataset.load_dataset(args.dataset, path)
+dataset.num_nodes = dataset.y.shape[0]
+dataset.num_edges = dataset[0].edge_index.shape[1]
 data = dataset[0]
 
 row, col = data.edge_index
 
-loader = GraphSAINTRandomWalkSampler(data, batch_size=100, walk_length = 1)
+
+print("loaded data")
+
+
+if dataset == "BarabasiAlbert":
+    loader = GraphSAINTRandomWalkSampler(data, batch_size=47, walk_length = 2)
+    print("Constructed RandomWalkSampler")
+else:
+    loader = GraphSAINTRandomWalkSampler(data, batch_size=100, walk_length = 2)
 
 model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -31,6 +41,7 @@ def train():
     total_loss = total_examples = 0
     for data in loader:
         print(data) 
+        print(torch.max(data.edge_index))
         data = data.to(device)
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
