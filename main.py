@@ -75,7 +75,10 @@ for epoch in range(1, 51):
     loss = train()
     accs = test()
     # # TODO: Double check which of the 3 types of accuracies EllipticBitcoin is missing
-    print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, valid acc: {accs[1]:04f}')
+    if args.dataset == "EllipticBitcoinDataset":
+            print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, test acc: {accs[1]:04f}')
+    else:
+        print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, valid acc: {accs[1]:04f}, test acc: {accs[2]:04f}' )
 
 
 

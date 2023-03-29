@@ -16,19 +16,22 @@ from torch_sparse import SparseTensor
 import dataset
 import graph_sampler
 
-use_metropolis_hastings = False 
+use_metropolis_hastings = True 
 
 G = nx.barabasi_albert_graph(224, 2)
+batch_size = 100 
+walk_length = 12 
+
 path = f"{os.path.dirname(__file__)}/dataset/BarabasiAlbert"
 barabasi_dataset = dataset.load_dataset("BarabasiAlbert", path)
 data = barabasi_dataset[0]
 
 if use_metropolis_hastings:
-    loader = graph_sampler.MetropolisHastingsSampler(data, 47, 2)
+    loader = graph_sampler.MetropolisHastingsRandomWalkSampler(data, batch_size, walk_length)
 else:
-    loader = GraphSAINTRandomWalkSampler(data, batch_size=47, walk_length = 2)
+    loader = GraphSAINTRandomWalkSampler(data, batch_size=batch_size, walk_length = walk_length)
 
-sampled_results = loader._sample_nodes(40)
+sampled_results = loader._sample_nodes(100)
 
 sampled_nodes = set()
 for elem in sampled_results:
