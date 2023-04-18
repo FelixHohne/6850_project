@@ -15,6 +15,7 @@ device = torch.device('cpu')
 parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
 parser.add_argument('--dataset', type=str, default="ErdosRenyi")
 parser.add_argument("--sampler", type=str, default="srw")
+parser.add_argument("--batch_size", type=int, default=500)
 
 args = parser.parse_args()
 print(args)
@@ -42,14 +43,14 @@ if dataset == "BarabasiAlbert":
 else:
     if args.sampler == "srw":
         loader = GraphSAINTRandomWalkSampler(
-            data, batch_size=100, walk_length=2)
+            data, batch_size=args.batch_size, walk_length=4)
     elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
-            data, batch_size=100, budget=2)
+            data, batch_size=args.batch_size, budget=4)
     elif args.sampler == "mhrwe":
         loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
-            data, batch_size=100, budget=2, alpha=0.25)
+            data, batch_size=args.batch_size, budget=4, alpha=0.25)
 
 model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256,
                           out_channels=dataset.num_classes).to(device)
@@ -86,7 +87,7 @@ def test():
 
 
 overall_accs = []
-for epoch in range(1, 1000):
+for epoch in range(1, 100):
     loss = train()
     accs = test()
     epoch_dic = {
@@ -108,5 +109,5 @@ results_df = pd.DataFrame(
     overall_accs
 )
 
-results_df.to_csv(f"{args.dataset}_{args.sampler}.csv")
+results_df.to_csv(f"{args.dataset}_{args.sampler}_{args.batch_size}.csv")
 
