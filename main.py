@@ -6,12 +6,14 @@ import os
 import dataset
 import models
 import graph_sampler
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 device = torch.device('cpu')
 
 parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
 parser.add_argument('--dataset', type=str, default="ErdosRenyi")
-parser.add_argument('--method', type=str)
 parser.add_argument("--sampler", type=str, default="srw")
 
 args = parser.parse_args()
@@ -71,16 +73,27 @@ def test():
     return accs
 
 
-for epoch in range(1, 51):
+overall_accs = []
+for epoch in range(1, 1000):
     loss = train()
     accs = test()
-    # # TODO: Double check which of the 3 types of accuracies EllipticBitcoin is missing
+    epoch_dic = {
+        "epoch" : epoch, 
+        "loss": loss, 
+        "train": accs[0], 
+        "test": accs[-1]
+    }
+    overall_accs.append(epoch_dic)
+
     if args.dataset == "EllipticBitcoinDataset":
             print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, test acc: {accs[1]:04f}')
     else:
         print(f'Epoch: {epoch:02d}, Loss: {loss:.4f}, train acc: {accs[0]:04f}, valid acc: {accs[1]:04f}, test acc: {accs[2]:04f}' )
 
 
+results_df = pd.DataFrame(
+    overall_accs
+)
 
-
+results_df.to_csv(f"{args.dataset}_{args.sampler}.csv")
 
