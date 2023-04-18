@@ -33,10 +33,10 @@ if dataset == "BarabasiAlbert":
     elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
-            data, batch_size=47, walk_length=2)
+            data, batch_size=47, budget=2)
     elif args.sampler == "mhrwe":
         loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
-            data, batch_size=47, walk_length=2, alpha=0.25)
+            data, batch_size=47, budget=2, alpha=0.25)
 else:
     if args.sampler == "srw":
         loader = GraphSAINTRandomWalkSampler(
