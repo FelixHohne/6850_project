@@ -28,6 +28,9 @@ if args.sampler == "srw":
 elif args.sampler == "mhrw":
     print("using mhrw")
     loader = graph_sampler.MetropolisHastingsRandomWalkSampler(data, batch_size = 100, budget = 2)
+elif args.sampler == 'mhrwe':
+    print("using mhrw with escaping")
+    loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(data, batch_size = 100, budget = 2, alpha=0.25)
 
 model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
