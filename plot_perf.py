@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     for i, df in enumerate(result_dfs):
         sns.lineplot(x=df['epoch'], y=df['test'], label=sys.argv[i + 2].split(".")[0])
-    plt.title(f"Test performance for {dataset_name} across Epochs")
+    plt.title(f"Test Perf. for {dataset_name} with walk_length=4, batch_size=500")
     plt.xlabel("Epoch")
     plt.ylabel("Test Accuracy")
     plt.legend()
