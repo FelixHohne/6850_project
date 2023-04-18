@@ -32,12 +32,16 @@ if dataset == "BarabasiAlbert":
   elif args.sampler == "mhrw":
       print("executing mhrw")
       loader = graph_sampler.MetropolisHastingsRandomWalkSampler(data, batch_size=47, walk_length = 2)
+  elif args.sampler == "mhrwe":
+      loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(data, batch_size=47, walk_length = 2, alpha=0.25)
 else:
     if args.sampler == "srw":
         loader = GraphSAINTRandomWalkSampler(data, batch_size=100, walk_length = 2)
-    else:
+    elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(data, batch_size = 100, budget = 2)
+    elif args.sampler == "mhrwe":
+      loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(data, batch_size=100, budget = 2, alpha=0.25)
 
 model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256, out_channels=dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
