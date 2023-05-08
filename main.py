@@ -51,6 +51,9 @@ if dataset == "BarabasiAlbert":
     elif args.sampler == "srws":
         loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
             data, batch_size=47, budget=2)
+    elif args.sampler == "srwe":
+        loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
+            data, batch_size=47, budget=2, alpha=0.25)
 else:
     if args.sampler == "srw":
         loader = GraphSAINTRandomWalkSampler(
@@ -68,6 +71,9 @@ else:
     elif args.sampler == "srws":
         loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
             data, batch_size=args.batch_size, budget=4)
+    elif args.sampler == "srwe":
+        loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
+            data, batch_size=args.batch_size, budget=4, alpha=0.25)
 
 model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256,
                           out_channels=dataset.num_classes).to(device)
