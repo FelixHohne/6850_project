@@ -190,3 +190,49 @@ class SimpleRandomWalkWithStallingSampler(GraphSAINTSampler):
                 node_idx.append(start[i]) 
                 
         return torch.from_numpy(np.array(node_idx))
+    
+class SimpleRandomWalkWithEscapingSampler(GraphSAINTSampler):
+    r"""Simple random walk with 1/2 probability of stalling at each node, based on GraphSAINT random walk sampler class (see
+    :class:`torch_geometric.data.GraphSAINTSampler`).
+
+    Args:
+        budget (int): The number of actions tracking an edge is denoted as total budget, 
+        which is denoted as 𝐵 here. Usually, 𝐵 ≥ |𝑉′| as RW-based algorithms are likely 
+        to backtrack when exploring the original graph.
+
+        alpha (float): In RWE, random walker chooses a mode with probability 𝛼 to jump, and 1 − 𝛼 to walk. 
+        If the random walker chooses walk, then a neighbor of current node is chosen as the next step in the walk. 
+        If the jump mode is chosen, a node is chosen with a probability distribution.
+    """
+    def __init__(self, data, batch_size: int, budget: int, alpha: float,
+                 num_steps: int = 1, sample_coverage: int = 0,
+                 save_dir = None, log: bool = True, **kwargs):
+        self.budget = budget
+        self.alpha = alpha
+        data['edge_index'] = add_self_loops(data['edge_index'])[0]
+        super(SimpleRandomWalkWithEscapingSampler,
+              self).__init__(data, batch_size, num_steps, sample_coverage,
+                             save_dir, log, **kwargs)
+
+    @property
+    def __filename__(self):
+        return (f'{self.__class__.__name__.lower()}_{self.budget}_'
+                f'{self.sample_coverage}.pt')
+
+    def _sample_nodes(self, batch_size):
+        start = np.random.randint(self.N, size=batch_size)
+        node_idx = list(start)
+        for _ in range(self.budget):
+            for i, node in enumerate(start):
+                if random.uniform(0,1) < self.alpha:
+                    start[i] = random.randint(0,self.N-1)
+                else:
+                    neighbors = self.adj[node.item()]
+                    d_i = neighbors.storage.col().shape[0]
+                    neighbor_idx = random.randint(0, d_i-1)
+                    u_idx = neighbors.storage.col()[neighbor_idx].item()
+                    start[i] = u_idx
+                    
+                node_idx.append(start[i]) 
+                
+        return torch.from_numpy(np.array(node_idx))
