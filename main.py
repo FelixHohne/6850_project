@@ -16,10 +16,11 @@ device = torch.device('cpu')
 parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
 parser.add_argument('--dataset', type=str, default="ErdosRenyi")
 parser.add_argument("--sampler", type=str, default="srw")
-parser.add_argument("--batch_size", type=int, default = 500)
+parser.add_argument("--batch_size", type=int, default = 100)
 parser.add_argument("--per_epoch_plot", action='store_true')
 parser.add_argument("--num_epochs", type = int, default = 100)
 parser.add_argument("--num_runs", type = int, default = 50)
+parser.add_argument("--alpha", type=float, default=0.25)
 
 args = parser.parse_args()
 print(args)
@@ -43,10 +44,10 @@ if dataset == "BarabasiAlbert":
             data, batch_size=47, budget=2)
     elif args.sampler == "mhrwe":
         loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
-            data, batch_size=47, budget=2, alpha=0.25)
+            data, batch_size=47, budget=2, alpha=args.alpha)
     elif args.sampler == "rcmh":
         loader = graph_sampler.RejectionControlMetropolisHastingsSampler(
-            data, batch_size=47, budget=2, alpha=0.25)
+            data, batch_size=47, budget=2, alpha=args.alpha)
     elif args.sampler == "srws":
         loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
             data, batch_size=47, budget=2)
@@ -60,10 +61,10 @@ else:
             data, batch_size=args.batch_size, budget=4)
     elif args.sampler == "mhrwe":
         loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
-            data, batch_size=args.batch_size, budget=4, alpha=0.25)
+            data, batch_size=args.batch_size, budget=4, alpha=args.alpha)
     elif args.sampler == "rcmh":
         loader = graph_sampler.RejectionControlMetropolisHastingsSampler(
-            data, batch_size=args.batch_size, budget=4, alpha=0.25)
+            data, batch_size=args.batch_size, budget=4, alpha=args.alpha)
     elif args.sampler == "srws":
         loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
             data, batch_size=args.batch_size, budget=4)
@@ -109,9 +110,7 @@ for i in range(args.num_runs):
     for epoch in range(1, args.num_epochs):
         loss = train()
         accs = test()
-        
     
-
         if args.dataset == "EllipticBitcoinDataset":
             epoch_dic = {
             "epoch" : epoch, 

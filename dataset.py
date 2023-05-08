@@ -1,7 +1,7 @@
 import torch 
 import math 
 import os
-from torch_geometric.datasets import Flickr, EllipticBitcoinDataset
+from torch_geometric.datasets import Flickr, EllipticBitcoinDataset, Reddit
 import networkx as nx
 from torch_geometric.data import Data, InMemoryDataset, download_url
 from typing import Optional, Callable, List
@@ -115,6 +115,9 @@ def load_dataset(dataset, path):
         dataset = ErdosRenyiDataset()
     elif dataset == "BarabasiAlbert":
         dataset = BarabasiAlbertDataset(path)
+    elif dataset == "Reddit":
+        dataset = Reddit(path)
+        print(dataset[0])
     else:
         raise ValueError
     return dataset 
