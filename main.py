@@ -19,7 +19,7 @@ parser.add_argument("--sampler", type=str, default="srw")
 parser.add_argument("--batch_size", type=int, default = 100)
 parser.add_argument("--per_epoch_plot", action='store_true')
 parser.add_argument("--num_epochs", type = int, default = 100)
-parser.add_argument("--num_runs", type = int, default = 10)
+parser.add_argument("--num_runs", type = int, default = 25)
 parser.add_argument("--alpha", type=float, default=0.25)
 
 args = parser.parse_args()
@@ -37,27 +37,27 @@ row, col = data.edge_index
 if dataset == "BarabasiAlbert":
     if args.sampler == "srw":
         loader = graph_sampler.SimpleRandomWalkSampler(
-            data, batch_size=47, walk_length=2)
+            data, batch_size = 1, budget = 5)
     elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
-            data, batch_size=1, budget=10)
+            data, batch_size=1, budget=4)
     elif args.sampler == "mhrwe":
         loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
-            data, batch_size=1, budget=10, alpha=args.alpha)
+            data, batch_size=1, budget=5, alpha=args.alpha)
     elif args.sampler == "rcmh":
         loader = graph_sampler.RejectionControlMetropolisHastingsSampler(
-            data, batch_size=1, budget=10, alpha=args.alpha)
+            data, batch_size=1, budget=5, alpha=args.alpha)
     elif args.sampler == "srws":
         loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
-            data, batch_size=1, budget=10)
+            data, batch_size=1, budget=5)
     elif args.sampler == "srwe":
         loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
-            data, batch_size=1, budget=10, alpha=0.25)
+            data, batch_size=1, budget=5, alpha=0.25)
 else:
     if args.sampler == "srw":
         loader = graph_sampler.SimpleRandomWalkSampler(
-            data, batch_size=args.batch_size, walk_length=4)
+            data, batch_size=args.batch_size, budget=4)
     elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(

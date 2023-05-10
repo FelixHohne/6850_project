@@ -249,7 +249,7 @@ class SimpleRandomWalkSampler(GraphSAINTSampler):
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
         data['edge_index'] = add_self_loops(data['edge_index'])[0]
-        super(SimpleRandomWalkWithEscapingSampler,
+        super(SimpleRandomWalkSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
 
