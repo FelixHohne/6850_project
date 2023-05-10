@@ -19,7 +19,7 @@ parser.add_argument("--sampler", type=str, default="srw")
 parser.add_argument("--batch_size", type=int, default = 100)
 parser.add_argument("--per_epoch_plot", action='store_true')
 parser.add_argument("--num_epochs", type = int, default = 100)
-parser.add_argument("--num_runs", type = int, default = 50)
+parser.add_argument("--num_runs", type = int, default = 10)
 parser.add_argument("--alpha", type=float, default=0.25)
 
 args = parser.parse_args()
@@ -37,23 +37,23 @@ row, col = data.edge_index
 if dataset == "BarabasiAlbert":
     if args.sampler == "srw":
         loader = GraphSAINTRandomWalkSampler(
-            data, batch_size=47, walk_length=2)
+            data, batch_size=1, walk_length=5)
     elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
-            data, batch_size=47, budget=2)
+            data, batch_size=1, budget=10)
     elif args.sampler == "mhrwe":
         loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
-            data, batch_size=47, budget=2, alpha=args.alpha)
+            data, batch_size=1, budget=10, alpha=args.alpha)
     elif args.sampler == "rcmh":
         loader = graph_sampler.RejectionControlMetropolisHastingsSampler(
-            data, batch_size=47, budget=2, alpha=args.alpha)
+            data, batch_size=1, budget=10, alpha=args.alpha)
     elif args.sampler == "srws":
         loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
-            data, batch_size=47, budget=2)
+            data, batch_size=1, budget=10)
     elif args.sampler == "srwe":
         loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
-            data, batch_size=47, budget=2, alpha=0.25)
+            data, batch_size=1, budget=10, alpha=0.25)
 else:
     if args.sampler == "srw":
         loader = GraphSAINTRandomWalkSampler(
@@ -74,17 +74,20 @@ else:
     elif args.sampler == "srwe":
         loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
             data, batch_size=args.batch_size, budget=4, alpha=0.25)
+    else:
+        raise ValueError("Invalid sampler argument provided")
 
-model = models.GNNNetwork(dataset.num_node_features, hidden_channels=256,
+model = models.GNNNetwork(args.dataset, dataset.num_node_features, hidden_channels=256,
                           out_channels=dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
 
 def train():
     model.train()
     total_loss = total_examples = 0
     for data in loader:
-        # print(data)
+        # print("Start train mask")
+        # print(data.train_mask)
+        # print("End train mask")
         data = data.to(device)
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
@@ -97,17 +100,25 @@ def train():
 
 
 @torch.no_grad()
-def test():
+def test(epoch):
     model.eval()
     out = model(data.x.to(device), data.edge_index.to(device))
     pred = out.argmax(dim=-1)
+    # print("Correct labels")
+    # print(data.y)
+    # print("__________________")
+    # print(pred)
+    # print("Correct")
+    # print(pred.eq(data.y.to(device)))
+    
     correct = pred.eq(data.y.to(device))
 
     accs = []
-    for _, mask in data('train_mask', 'val_mask', 'test_mask'):
+    # for _, mask in data('train_mask', 'val_mask', 'test_mask'):
+    for name, mask in data('train_mask', 'val_mask', 'test_mask'):
         accs.append(correct[mask].sum().item() / mask.sum().item())
+    # print("Done")
     return accs
-
 
 test_accs = []
 for i in range(args.num_runs):
@@ -115,7 +126,7 @@ for i in range(args.num_runs):
     test_acc = 0
     for epoch in range(1, args.num_epochs):
         loss = train()
-        accs = test()
+        accs = test(epoch)
     
         if args.dataset == "EllipticBitcoinDataset":
             epoch_dic = {

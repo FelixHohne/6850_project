@@ -45,19 +45,62 @@ def erdos_renyi_as_graph_data(n, p, num_features, num_classes):
     data.num_classes = num_classes
     return data 
 
-def barabasi_albert(n, m, num_features, num_classes):
+def barabasi_albert(n, m):
     G = nx.barabasi_albert_graph(n, m)
     num_nodes = n 
-    X = torch.rand((num_nodes, num_features))
-    label = torch.randint(0, num_classes, (num_nodes, ))
+    X = 1000 * torch.rand((num_nodes,1))
+    node_features_dict = {}
+    for node in G.nodes():
+        node_features_dict[node] = X[node].item()
+    nx.set_node_attributes(G, node_features_dict, 'feature')
+
+    label = torch.zeros(num_nodes, dtype=int)
+
+    label_values = torch.zeros(num_nodes)
+
+    for node in G.nodes():
+        self_factor = 0.5
+        label_value = self_factor * G.nodes[node]['feature']
+        assert torch.abs(label_value - self_factor * X[node]) < 1e-8
+        neighbor_aggr = 0 
+        for neighbor in G.neighbors(node):
+            neighbor_aggr += (1 / (1 + G.degree[0])) *  G.nodes[neighbor]['feature']
+        label_value += 0.5 * neighbor_aggr
+        label_values[node] = label_value 
+    
+    quantiles_to_get = torch.tensor([0.2, 0.4, 0.5, 0.6, 0.8])
+    q = torch.quantile(label_values, quantiles_to_get)
+    print("Median: ", torch.median(label_values))
+    print("Quantile median:", q[2])
+    print("Q:", q[0], q[1], q[2], q[3])
+    
+    for node in G.nodes():
+        print(label_values[node])
+        if label_values[node].item() <= q[0].item():
+            # print("label value: ", label_values[node], q[0].item(), "label 0")
+            label[node] = 0 
+        elif label_values[node] <= q[1].item():
+            label[node] = 1
+            # print("label value: ", label_values[node], q[1].item(), "label 1")
+        elif label_values[node] <= q[2].item():
+            label[node] = 2
+            # print("label value: ", label_values[node], q[2].item(), "label 2")
+        elif label_values[node] <= q[3].item():
+            label[node] = 3
+            # print("label value: ", label_values[node], q[3].item(), "label 3")
+        else:
+            label[node] = 4
+            # print("label value: ", label_values[node], "label 4")
     edge_index = torch.tensor(nx.to_pandas_edgelist(G).to_numpy().T)
+
+    print(label)
     train_idx, valid_idx, test_idx = get_idx_split(label)
     data = Data(x=X, edge_index=edge_index, y = label)
     data.train_mask = train_idx 
     data.valid_mask = valid_idx 
     data.test_mask = test_idx 
-    data.num_node_features = num_nodes
-    data.num_classes = num_classes
+    data.num_node_features = 1
+    data.num_classes = 5
     return data 
 
 class BarabasiAlbertDataset(InMemoryDataset):
@@ -76,7 +119,7 @@ class BarabasiAlbertDataset(InMemoryDataset):
         return files
 
     def process(self):
-        data = barabasi_albert(224, 2, 100, 10)
+        data = barabasi_albert(224, 2)
         torch.save(self.collate([data]), self.processed_paths[0])
 
     def __repr__(self):
