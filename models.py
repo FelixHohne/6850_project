@@ -8,7 +8,6 @@ import numpy as np
 import scipy.sparse
 from tqdm import tqdm
 
-
 class GNNNetwork(nn.Module):
     def __init__(self, dataset_name, in_channels, hidden_channels,out_channels):
         super(GNNNetwork, self).__init__()

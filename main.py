@@ -72,7 +72,7 @@ else:
             data, batch_size=args.batch_size, budget=4)
     elif args.sampler == "srwe":
         loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
-            data, batch_size=args.batch_size, budget=4, alpha=0.25)
+            data, batch_size=args.batch_size, budget=4, alpha=args.alpha)
     else:
         raise ValueError("Invalid sampler argument provided")
 
@@ -80,6 +80,8 @@ model = models.GNNNetwork(args.dataset, dataset.num_node_features, hidden_channe
                           out_channels=dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
+
+seen_elements = set()
 def train():
     model.train()
     total_loss = total_examples = 0
@@ -87,10 +89,16 @@ def train():
     num_batches = 0
     for data in loader:
         data = data.to(device)
-
-        overall_mean += torch.sum(data.x[:, 1])
-        print(data.x.shape)
-        num_batches += data.x.shape[0]
+        for i in range(data.x.shape[0]):
+            if data.x[i, 2].item() not in seen_elements:
+                overall_mean += data.x[i, 1]
+                num_batches += 1 
+                seen_elements.add(data.x[i, 2].item())
+                assert (data.x[i, 2].item() in seen_elements)
+            else:
+                print("Seen: ", data.x[i, 2].item())
+        # overall_mean += torch.sum(data.x[:, 1])
+        # num_batches += data.x.shape[0]
     
     print(overall_mean / num_batches)
     exit(0)

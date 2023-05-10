@@ -4,7 +4,7 @@ import argparse
 import random
 from torch_geometric.data import GraphSAINTSampler
 from torch_geometric.nn import GraphConv
-from torch_geometric.utils import degree, add_self_loops
+from torch_geometric.utils import degree, add_self_loops, is_undirected, to_undirected
 import torch.nn.functional as F
 import os
 from torch_sparse import spmm
@@ -24,7 +24,8 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
-        data['edge_index'] = add_self_loops(data['edge_index'])[0]
+        data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        print("is undirected:", is_undirected(data['edge_index']))
         super(MetropolisHastingsRandomWalkSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
@@ -45,7 +46,7 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
                 u_idx = neighbors.storage.col()[neighbor_idx].item()
                 d_u = self.adj[u_idx].storage.col().shape[0]
                 r = random.uniform(0,1)
-
+                # print(f'ratio: {d_i / d_u}')
                 if r < (d_i/d_u):
                     start[i] = u_idx
                 node_idx.append(start[i]) 

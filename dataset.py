@@ -48,11 +48,12 @@ def erdos_renyi_as_graph_data(n, p, num_features, num_classes):
 def barabasi_albert(n, m):
     G = nx.barabasi_albert_graph(n, m)
     num_nodes = n 
-    X = 1000 * torch.rand((num_nodes, 2))
+    X = 1000 * torch.rand((num_nodes, 3))
     node_features_dict = {}
     for node in G.nodes():
         node_features_dict[node] = X[node, 0].item()
         X[node, 1] = G.degree[node]
+        X[node, 2] = node 
     nx.set_node_attributes(G, node_features_dict, 'feature')
 
     label = torch.zeros(num_nodes, dtype=int)
