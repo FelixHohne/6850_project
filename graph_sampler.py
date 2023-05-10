@@ -244,11 +244,10 @@ class SimpleRandomWalkSampler(GraphSAINTSampler):
         which is denoted as 𝐵 here. Usually, 𝐵 ≥ |𝑉′| as RW-based algorithms are likely 
         to backtrack when exploring the original graph.
     """
-    def __init__(self, data, batch_size: int, budget: int, alpha: float,
+    def __init__(self, data, batch_size: int, budget: int,
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
-        self.alpha = alpha
         data['edge_index'] = add_self_loops(data['edge_index'])[0]
         super(SimpleRandomWalkWithEscapingSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
