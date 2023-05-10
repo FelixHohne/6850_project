@@ -236,7 +236,7 @@ class SimpleRandomWalkWithEscapingSampler(GraphSAINTSampler):
         return torch.from_numpy(np.array(node_idx))
     
 class SimpleRandomWalkSampler(GraphSAINTSampler):
-    r"""Simple random walk with 1/2 probability of stalling at each node, based on GraphSAINT random walk sampler class (see
+    r"""Simple random walk, based on GraphSAINT random walk sampler class (see
     :class:`torch_geometric.data.GraphSAINTSampler`).
 
     Args:
