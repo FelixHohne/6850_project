@@ -36,8 +36,8 @@ row, col = data.edge_index
 
 if dataset == "BarabasiAlbert":
     if args.sampler == "srw":
-        loader = GraphSAINTRandomWalkSampler(
-            data, batch_size=1, walk_length=5)
+        loader = graph_sampler.SimpleRandomWalkSampler(
+            data, batch_size=47, walk_length=2)
     elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
@@ -56,7 +56,7 @@ if dataset == "BarabasiAlbert":
             data, batch_size=1, budget=10, alpha=0.25)
 else:
     if args.sampler == "srw":
-        loader = GraphSAINTRandomWalkSampler(
+        loader = graph_sampler.SimpleRandomWalkSampler(
             data, batch_size=args.batch_size, walk_length=4)
     elif args.sampler == "mhrw":
         print("executing mhrw")
