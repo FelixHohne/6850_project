@@ -37,7 +37,8 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
     def _sample_nodes(self, batch_size):
         start = np.random.randint(self.N, size=batch_size)
         node_idx = list(start)
-        for _ in range(self.budget):
+        j = 0
+        while j < self.budget:
             for i, node in enumerate(start):
                 neighbors = self.adj[node.item()]
                 d_i = neighbors.storage.col().shape[0]
@@ -48,7 +49,8 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
 
                 if r < (d_i/d_u):
                     start[i] = u_idx
-                node_idx.append(start[i]) 
+                    j += 1
+                    node_idx.append(start[i])
                 
         return torch.from_numpy(np.array(node_idx))
     
@@ -84,10 +86,13 @@ class MetropolisHastingsRandomWalkWithEscapingSampler(GraphSAINTSampler):
     def _sample_nodes(self, batch_size):
         start = np.random.randint(self.N, size=batch_size)
         node_idx = list(start)
-        for _ in range(self.budget):
+        j = 0
+        while j < self.budget:
             for i, node in enumerate(start):
                 if random.uniform(0,1) < self.alpha:
                     start[i] = random.randint(0,self.N-1)
+                    j += 1
+                    node_idx.append(start[i]) 
                 else:
                     neighbors = self.adj[node.item()]
                     d_i = neighbors.storage.col().shape[0]
@@ -98,8 +103,8 @@ class MetropolisHastingsRandomWalkWithEscapingSampler(GraphSAINTSampler):
 
                     if r < (d_u/d_i):
                         start[i] = u_idx
-                        
-                node_idx.append(start[i]) 
+                        j += 1
+                        node_idx.append(start[i]) 
                 
         return torch.from_numpy(np.array(node_idx))
     
@@ -133,7 +138,8 @@ class RejectionControlMetropolisHastingsSampler(GraphSAINTSampler):
     def _sample_nodes(self, batch_size):
         start = np.random.randint(self.N, size=batch_size)
         node_idx = list(start)
-        for _ in range(self.budget):
+        j = 0
+        while j < self.budget:
             for i, node in enumerate(start):
                 neighbors = self.adj[node.item()]
                 d_i = neighbors.storage.col().shape[0]
@@ -144,7 +150,8 @@ class RejectionControlMetropolisHastingsSampler(GraphSAINTSampler):
 
                 if r <= (d_i/d_u)**self.alpha:
                     start[i] = u_idx
-                node_idx.append(start[i]) 
+                    j += 1
+                    node_idx.append(start[i]) 
                 
         return torch.from_numpy(np.array(node_idx))
     
