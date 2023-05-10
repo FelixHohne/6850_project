@@ -37,23 +37,23 @@ row, col = data.edge_index
 if dataset == "BarabasiAlbert":
     if args.sampler == "srw":
         loader = graph_sampler.SimpleRandomWalkSampler(
-            data, batch_size = 1, budget = 5)
+            data, batch_size = 2, budget = 5)
     elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
-            data, batch_size=1, budget=4)
+            data, batch_size=2, budget=5)
     elif args.sampler == "mhrwe":
         loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
-            data, batch_size=1, budget=5, alpha=args.alpha)
+            data, batch_size=2, budget=5, alpha=args.alpha)
     elif args.sampler == "rcmh":
         loader = graph_sampler.RejectionControlMetropolisHastingsSampler(
-            data, batch_size=1, budget=5, alpha=args.alpha)
+            data, batch_size=2, budget=5, alpha=args.alpha)
     elif args.sampler == "srws":
         loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
-            data, batch_size=1, budget=5)
+            data, batch_size=2, budget=5)
     elif args.sampler == "srwe":
         loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
-            data, batch_size=1, budget=5, alpha=0.25)
+            data, batch_size=2, budget=5, alpha=0.25)
 else:
     if args.sampler == "srw":
         loader = graph_sampler.SimpleRandomWalkSampler(
