@@ -19,7 +19,7 @@ parser.add_argument("--sampler", type=str, default="srw")
 parser.add_argument("--batch_size", type=int, default = 100)
 parser.add_argument("--per_epoch_plot", action='store_true')
 parser.add_argument("--num_epochs", type = int, default = 100)
-parser.add_argument("--num_runs", type = int, default = 25)
+parser.add_argument("--num_runs", type = int, default = 50)
 parser.add_argument("--alpha", type=float, default=0.25)
 
 args = parser.parse_args()
@@ -33,27 +33,26 @@ data = dataset[0]
 
 row, col = data.edge_index
 
-
 if dataset == "BarabasiAlbert":
     if args.sampler == "srw":
         loader = graph_sampler.SimpleRandomWalkSampler(
-            data, batch_size = 2, budget = 5)
+            data, batch_size = 5, budget = 5)
     elif args.sampler == "mhrw":
         print("executing mhrw")
         loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
-            data, batch_size=2, budget=5)
+            data, batch_size=5, budget=5)
     elif args.sampler == "mhrwe":
         loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
-            data, batch_size=2, budget=5, alpha=args.alpha)
+            data, batch_size=5, budget=5, alpha=args.alpha)
     elif args.sampler == "rcmh":
         loader = graph_sampler.RejectionControlMetropolisHastingsSampler(
-            data, batch_size=2, budget=5, alpha=args.alpha)
+            data, batch_size=5, budget=5, alpha=args.alpha)
     elif args.sampler == "srws":
         loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
-            data, batch_size=2, budget=5)
+            data, batch_size=5, budget=5)
     elif args.sampler == "srwe":
         loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
-            data, batch_size=2, budget=5, alpha=0.25)
+            data, batch_size=5, budget=5, alpha=0.25)
 else:
     if args.sampler == "srw":
         loader = graph_sampler.SimpleRandomWalkSampler(
@@ -84,11 +83,24 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 def train():
     model.train()
     total_loss = total_examples = 0
+    overall_mean = 0 
+    num_batches = 0
+    for data in loader:
+        data = data.to(device)
+
+        overall_mean += torch.sum(data.x[:, 1])
+        print(data.x.shape)
+        num_batches += data.x.shape[0]
+    
+    print(overall_mean / num_batches)
+    exit(0)
+    
     for data in loader:
         # print("Start train mask")
         # print(data.train_mask)
         # print("End train mask")
         data = data.to(device)
+        print(torch.mean(data.x[:, 1]))
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
         loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])

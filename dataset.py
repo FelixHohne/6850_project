@@ -47,27 +47,26 @@ def erdos_renyi_as_graph_data(n, p, num_features, num_classes):
 
 def barabasi_albert(n, m):
     G = nx.barabasi_albert_graph(n, m)
-    G = G.reverse()
     num_nodes = n 
-    X = 1000 * torch.rand((num_nodes,1))
+    X = 1000 * torch.rand((num_nodes, 2))
     node_features_dict = {}
     for node in G.nodes():
-        node_features_dict[node] = X[node].item()
+        node_features_dict[node] = X[node, 0].item()
+        X[node, 1] = G.degree[node]
     nx.set_node_attributes(G, node_features_dict, 'feature')
 
     label = torch.zeros(num_nodes, dtype=int)
-
     label_values = torch.zeros(num_nodes)
 
     for node in G.nodes():
-        self_factor = 1 + G.degree[node]
+        self_factor = 1 / (1 + G.degree[node])
         label_value = self_factor * G.nodes[node]['feature']
-        assert torch.abs(label_value - self_factor * X[node]) < 1e-8
+        assert torch.abs(label_value - self_factor * X[node, 0]) < 1e-3
         neighbor_aggr = 0 
         for neighbor in G.neighbors(node):
             neighbor_aggr += (1 / (1 + G.degree[neighbor])) *  G.nodes[neighbor]['feature']
         label_value += 1 * neighbor_aggr
-        label_values[node] = label_value 
+        label_values[node] = label_value + np.random.normal(G.degree[node])
     
     quantiles_to_get = torch.tensor([0.2, 0.4, 0.6, 0.8])
     q = torch.quantile(label_values, quantiles_to_get)
@@ -120,7 +119,7 @@ class BarabasiAlbertDataset(InMemoryDataset):
         return files
 
     def process(self):
-        data = barabasi_albert(2240, 3)
+        data = barabasi_albert(2240, 150)
         torch.save(self.collate([data]), self.processed_paths[0])
 
     def __repr__(self):
