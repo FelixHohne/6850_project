@@ -38,6 +38,8 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
     def _sample_nodes(self, batch_size):
         start = np.random.randint(self.N, size=batch_size)
         node_idx = list(start)
+        accepted = 0 
+        rejected = 0
         for _ in range(self.budget):
             for i, node in enumerate(start):
                 neighbors = self.adj[node.item()]
@@ -45,11 +47,15 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
                 neighbor_idx = random.randint(0, d_i-1)
                 u_idx = neighbors.storage.col()[neighbor_idx].item()
                 d_u = self.adj[u_idx].storage.col().shape[0]
-                r = random.uniform(0,1)
-                # print(f'ratio: {d_i / d_u}')
+                r = random.uniform(0, 1)
                 if r < (d_i/d_u):
                     start[i] = u_idx
+                    # print(f"r:  {r} ratio: {d_i / d_u}")
+                    accepted += 1 
+                else:
+                    rejected += 1 
                 node_idx.append(start[i]) 
+        # print("accepted: ", accepted, "rejected: ", rejected)
                 
         return torch.from_numpy(np.array(node_idx))
     
@@ -209,6 +215,8 @@ class SimpleRandomWalkWithEscapingSampler(GraphSAINTSampler):
         self.budget = budget
         self.alpha = alpha
         data['edge_index'] = add_self_loops(data['edge_index'])[0]
+        data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        print("is undirected:", is_undirected(data['edge_index']))
         super(SimpleRandomWalkWithEscapingSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
@@ -249,7 +257,9 @@ class SimpleRandomWalkSampler(GraphSAINTSampler):
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
-        data['edge_index'] = add_self_loops(data['edge_index'])[0]
+        # data['edge_index'] = add_self_loops(data['edge_index'])[0]
+        data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        print("is undirected:", is_undirected(data['edge_index']))
         super(SimpleRandomWalkSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)

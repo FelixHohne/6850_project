@@ -19,7 +19,7 @@ parser.add_argument("--sampler", type=str, default="srw")
 parser.add_argument("--batch_size", type=int, default = 100)
 parser.add_argument("--per_epoch_plot", action='store_true')
 parser.add_argument("--num_epochs", type = int, default = 100)
-parser.add_argument("--num_runs", type = int, default = 50)
+parser.add_argument("--num_runs", type = int, default = 10)
 parser.add_argument("--alpha", type=float, default=0.25)
 
 args = parser.parse_args()
@@ -96,19 +96,18 @@ def train():
                 seen_elements.add(data.x[i, 2].item())
                 assert (data.x[i, 2].item() in seen_elements)
             else:
-                print("Seen: ", data.x[i, 2].item())
+                # print("Seen: ", data.x[i, 2].item())
+                pass 
         # overall_mean += torch.sum(data.x[:, 1])
         # num_batches += data.x.shape[0]
     
-    print(overall_mean / num_batches)
-    exit(0)
     
     for data in loader:
         # print("Start train mask")
         # print(data.train_mask)
         # print("End train mask")
         data = data.to(device)
-        print(torch.mean(data.x[:, 1]))
+        # print(torch.mean(data.x[:, 1]))
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
         loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])

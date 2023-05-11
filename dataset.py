@@ -60,14 +60,18 @@ def barabasi_albert(n, m):
     label_values = torch.zeros(num_nodes)
 
     for node in G.nodes():
-        self_factor = 1 / (1 + G.degree[node])
+        self_factor = 0.2
         label_value = self_factor * G.nodes[node]['feature']
         assert torch.abs(label_value - self_factor * X[node, 0]) < 1e-3
         neighbor_aggr = 0 
+        num_neighbors = 0 
         for neighbor in G.neighbors(node):
             neighbor_aggr += (1 / (1 + G.degree[neighbor])) *  G.nodes[neighbor]['feature']
-        label_value += 1 * neighbor_aggr
-        label_values[node] = label_value + np.random.normal(G.degree[node])
+            num_neighbors += 1 
+        neighbor_factor = 0.5
+        label_value += neighbor_factor * neighbor_aggr / num_neighbors 
+        # label_values[node] = label_value + np.random.normal(scale=math.sqrt(G.degree[node]))
+        label_values[node] = label_value 
     
     quantiles_to_get = torch.tensor([0.2, 0.4, 0.6, 0.8])
     q = torch.quantile(label_values, quantiles_to_get)
