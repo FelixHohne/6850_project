@@ -16,9 +16,9 @@ device = torch.device('cpu')
 parser = argparse.ArgumentParser("Large Scale Graph Learning Codes")
 parser.add_argument('--dataset', type=str, default="ErdosRenyi")
 parser.add_argument("--sampler", type=str, default="srw")
-parser.add_argument("--batch_size", type=int, default = 100)
+parser.add_argument("--batch_size", type=int, default = 25)
 parser.add_argument("--per_epoch_plot", action='store_true')
-parser.add_argument("--num_epochs", type = int, default = 100)
+parser.add_argument("--num_epochs", type = int, default = 50)
 parser.add_argument("--num_runs", type = int, default = 10)
 parser.add_argument("--alpha", type=float, default=0.25)
 
@@ -28,8 +28,13 @@ print(args)
 path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
 dataset = dataset.load_dataset(args.dataset, path)
 dataset.num_nodes = dataset.y.shape[0]
-dataset.num_edges = dataset[0].edge_index.shape[1]
-data = dataset[0]
+if args.dataset not in ("AmazonComputers"):
+    data = dataset[0]
+    dataset.num_edges = dataset[0].edge_index.shape[1]
+else:
+    data = dataset
+    dataset.num_edges = data.edge_index.shape[1]
+    print(dataset.num_edges)
 
 row, col = data.edge_index
 
@@ -110,7 +115,10 @@ def train():
         # print(torch.mean(data.x[:, 1]))
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
-        loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
+        if data.train_mask.shape[1] > 1:
+            loss = F.nll_loss(out[data.train_mask[:, 0]], data.y[data.train_mask[:, 0]])
+        else:
+            loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
         loss.backward()
         optimizer.step()
         total_loss += loss.item() * data.num_nodes
@@ -135,7 +143,10 @@ def test(epoch):
     accs = []
     # for _, mask in data('train_mask', 'val_mask', 'test_mask'):
     for name, mask in data('train_mask', 'val_mask', 'test_mask'):
-        accs.append(correct[mask].sum().item() / mask.sum().item())
+        if data.train_mask.shape[1] > 1 and name != 'test_mask':
+            accs.append(correct[mask[:, 0]].sum().item() / mask[:, 0].sum().item())
+        else:
+            accs.append(correct[mask].sum().item() / mask.sum().item())
     # print("Done")
     return accs
 

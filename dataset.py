@@ -1,7 +1,7 @@
 import torch 
 import math 
 import os
-from torch_geometric.datasets import Flickr, EllipticBitcoinDataset, Reddit
+from torch_geometric.datasets import Flickr, EllipticBitcoinDataset, Reddit, Amazon, WikiCS
 import networkx as nx
 from torch_geometric.data import Data, InMemoryDataset, download_url
 from typing import Optional, Callable, List
@@ -166,6 +166,18 @@ def load_dataset(dataset, path):
     elif dataset == "Reddit":
         dataset = Reddit(path)
         print(dataset[0])
+    elif dataset == "WikiCS":
+        dataset = WikiCS(path)
+    elif dataset == "AmazonComputers":
+        print(path)
+        dataset = Amazon(path, "Computers")
+        data = dataset[0]
+        train_idx, valid_idx, test_idx = get_idx_split(dataset[0].y)
+        data.train_idx = train_idx 
+        data.valid_idx = valid_idx 
+        data.test_idx = test_idx
+        print(data)
+        return data
     else:
         raise ValueError
     return dataset 
