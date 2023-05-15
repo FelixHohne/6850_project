@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 def get_prologue(barabasi, caption):
-    return ['\\begin{table}[!htbp]', '\\vspace{-5pt}', '\\centering', '\\caption{' + caption + '}', '\\label{tab:mini_results}', '{\small', '\\begin{tabular}{llll}' if barabasi else '\\begin{tabular}{llllll}', '\\toprule', 'Sampler & $m = 2$ & $m = 3$ & $m = 4$ \\\\' if barabasi else 'Sampler & $\\alpha = 0.1$ & $\\alpha = 0.25$ & $\\alpha = 0.5$ & $\\alpha = 0.75$ & $\\alpha = 0.9$ \\\\', '\\midrule']
+    return ['\\begin{table}[!htbp]', '\\vspace{-5pt}', '\\centering', '\\caption{' + caption + '}', '\\label{tab:mini_results}', '{\small', '\\begin{tabular}{llll}' if barabasi else '\\begin{tabular}{llllll}', '\\toprule', 'Graph Size & $m = 2$ & $m = 3$ & $m = 4$ \\\\' if barabasi else 'Sampler & $\\alpha = 0.1$ & $\\alpha = 0.25$ & $\\alpha = 0.5$ & $\\alpha = 0.75$ & $\\alpha = 0.9$ \\\\', '\\midrule']
 
 def main():
     epilogue = ['\\end{tabular}', '}', '\\vspace{-10pt}', '\\end{table}']
