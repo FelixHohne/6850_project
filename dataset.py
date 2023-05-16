@@ -1,7 +1,7 @@
 import torch 
 import math 
 import os
-from torch_geometric.datasets import Flickr, EllipticBitcoinDataset, Reddit, Amazon, WikiCS
+from torch_geometric.datasets import Flickr, EllipticBitcoinDataset, Reddit, Amazon, WikiCS, Actor
 import networkx as nx
 from torch_geometric.data import Data, InMemoryDataset, download_url
 from typing import Optional, Callable, List
@@ -10,8 +10,6 @@ import os.path as osp
 
 device = torch.device("cpu")
  
-
-
 def get_idx_split(label, tr_prop = 0.5, val_prop = 0.25):
     num_nodes = label.shape[0]
     indices = torch.randperm(num_nodes, device=device)
@@ -80,7 +78,6 @@ def barabasi_albert(n, m):
     # print("Q:", q[0], q[1], q[2], q[3])
     
     for node in G.nodes():
-        print(label_values[node])
         if label_values[node].item() <= q[0].item():
             # print("label value: ", label_values[node], q[0].item(), "label 0")
             label[node] = 0 
@@ -98,7 +95,6 @@ def barabasi_albert(n, m):
             # print("label value: ", label_values[node], "label 4")
     edge_index = torch.tensor(nx.to_pandas_edgelist(G).to_numpy().T)
 
-    print(label)
     train_idx, valid_idx, test_idx = get_idx_split(label)
     data = Data(x=X, edge_index=edge_index, y = label)
     data.train_mask = train_idx 
@@ -107,6 +103,10 @@ def barabasi_albert(n, m):
     data.num_node_features = 1
     data.num_classes = 5
     return data 
+
+
+barabasi_n = 0 
+barabasi_m = 0
 
 class BarabasiAlbertDataset(InMemoryDataset):
     def __init__(self, root = 'dataset/BarabasiAlbert', transform=None, pre_transform=None):
@@ -120,11 +120,12 @@ class BarabasiAlbertDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        files = ['barabasi_albert.pt']
+        files = ['barabasi_albert_{barabasi_n}_{barabasi_m}.pt']
         return files
 
     def process(self):
-        data = barabasi_albert(2240, 150)
+        print(f"barabasi n: {barabasi_n}, m: {barabasi_m}")
+        data = barabasi_albert(barabasi_n, barabasi_m)
         torch.save(self.collate([data]), self.processed_paths[0])
 
     def __repr__(self):
@@ -154,7 +155,7 @@ class ErdosRenyiDataset(InMemoryDataset):
         return '{}()'.format(self.__class__.__name__)
 
 
-def load_dataset(dataset, path):
+def load_dataset(dataset, path, args):
     if dataset == "Flickr":
         dataset = Flickr(path)
     elif dataset == "EllipticBitcoinDataset":
@@ -162,22 +163,19 @@ def load_dataset(dataset, path):
     elif dataset == "ErdosRenyi":
         dataset = ErdosRenyiDataset()
     elif dataset == "BarabasiAlbert":
+        print("args:", args.barabasi_m)
+        global barabasi_n 
+        global barabasi_m
+        barabasi_n = args.barabasi_n 
+        barabasi_m = args.barabasi_m
+        print("Generating Barabasi-Albert with: n= ", barabasi_n, "m = ", barabasi_m)
         dataset = BarabasiAlbertDataset(path)
     elif dataset == "Reddit":
         dataset = Reddit(path)
-        print(dataset[0])
     elif dataset == "WikiCS":
         dataset = WikiCS(path)
-    elif dataset == "AmazonComputers":
-        print(path)
-        dataset = Amazon(path, "Computers")
-        data = dataset[0]
-        train_idx, valid_idx, test_idx = get_idx_split(dataset[0].y)
-        data.train_idx = train_idx 
-        data.valid_idx = valid_idx 
-        data.test_idx = test_idx
-        print(data)
-        return data
+    elif dataset == "Actor":
+        dataset = Actor(path)
     else:
         raise ValueError
     return dataset 

@@ -21,12 +21,14 @@ parser.add_argument("--per_epoch_plot", action='store_true')
 parser.add_argument("--num_epochs", type = int, default = 50)
 parser.add_argument("--num_runs", type = int, default = 10)
 parser.add_argument("--alpha", type=float, default=0.25)
+parser.add_argument("--barabasi_n", type=int, default=2240)
+parser.add_argument("--barabasi_m",type=int, default=2)
 
 args = parser.parse_args()
 print(args)
 
 path = f"{os.path.dirname(__file__)}/dataset/{args.dataset}"
-dataset = dataset.load_dataset(args.dataset, path)
+dataset = dataset.load_dataset(args.dataset, path, args)
 dataset.num_nodes = dataset.y.shape[0]
 if args.dataset not in ("AmazonComputers"):
     data = dataset[0]
@@ -40,43 +42,43 @@ row, col = data.edge_index
 
 if dataset == "BarabasiAlbert":
     if args.sampler == "srw":
-        loader = graph_sampler.SimpleRandomWalkSampler(
+        loader = graph_sampler.SimpleRandomWalkSampler(args.dataset, 
             data, batch_size = 5, budget = 5)
     elif args.sampler == "mhrw":
         print("executing mhrw")
-        loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
+        loader = graph_sampler.MetropolisHastingsRandomWalkSampler(args.dataset, 
             data, batch_size=5, budget=5)
     elif args.sampler == "mhrwe":
-        loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
+        loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(args.dataset, 
             data, batch_size=5, budget=5, alpha=args.alpha)
     elif args.sampler == "rcmh":
-        loader = graph_sampler.RejectionControlMetropolisHastingsSampler(
+        loader = graph_sampler.RejectionControlMetropolisHastingsSampler(args.dataset, 
             data, batch_size=5, budget=5, alpha=args.alpha)
     elif args.sampler == "srws":
-        loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
+        loader = graph_sampler.SimpleRandomWalkWithStallingSampler(args.dataset, 
             data, batch_size=5, budget=5)
     elif args.sampler == "srwe":
-        loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
+        loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(args.dataset, 
             data, batch_size=5, budget=5, alpha=0.25)
 else:
     if args.sampler == "srw":
-        loader = graph_sampler.SimpleRandomWalkSampler(
+        loader = graph_sampler.SimpleRandomWalkSampler(args.dataset, 
             data, batch_size=args.batch_size, budget=4)
     elif args.sampler == "mhrw":
         print("executing mhrw")
-        loader = graph_sampler.MetropolisHastingsRandomWalkSampler(
+        loader = graph_sampler.MetropolisHastingsRandomWalkSampler(args.dataset, 
             data, batch_size=args.batch_size, budget=4)
     elif args.sampler == "mhrwe":
-        loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(
+        loader = graph_sampler.MetropolisHastingsRandomWalkWithEscapingSampler(args.dataset, 
             data, batch_size=args.batch_size, budget=4, alpha=args.alpha)
     elif args.sampler == "rcmh":
-        loader = graph_sampler.RejectionControlMetropolisHastingsSampler(
+        loader = graph_sampler.RejectionControlMetropolisHastingsSampler(args.dataset, 
             data, batch_size=args.batch_size, budget=4, alpha=args.alpha)
     elif args.sampler == "srws":
-        loader = graph_sampler.SimpleRandomWalkWithStallingSampler(
+        loader = graph_sampler.SimpleRandomWalkWithStallingSampler(args.dataset, 
             data, batch_size=args.batch_size, budget=4)
     elif args.sampler == "srwe":
-        loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(
+        loader = graph_sampler.SimpleRandomWalkWithEscapingSampler(args.dataset, 
             data, batch_size=args.batch_size, budget=4, alpha=args.alpha)
     else:
         raise ValueError("Invalid sampler argument provided")
@@ -115,7 +117,7 @@ def train():
         # print(torch.mean(data.x[:, 1]))
         optimizer.zero_grad()
         out = model(data.x, data.edge_index)
-        if data.train_mask.shape[1] > 1:
+        if len(data.train_mask.shape) > 1 and data.train_mask.shape[1] > 1:
             loss = F.nll_loss(out[data.train_mask[:, 0]], data.y[data.train_mask[:, 0]])
         else:
             loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
@@ -143,7 +145,7 @@ def test(epoch):
     accs = []
     # for _, mask in data('train_mask', 'val_mask', 'test_mask'):
     for name, mask in data('train_mask', 'val_mask', 'test_mask'):
-        if data.train_mask.shape[1] > 1 and name != 'test_mask':
+        if (len(mask.shape) > 1) and mask.shape[1] > 1:
             accs.append(correct[mask[:, 0]].sum().item() / mask[:, 0].sum().item())
         else:
             accs.append(correct[mask].sum().item() / mask.sum().item())

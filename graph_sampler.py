@@ -20,12 +20,14 @@ class MetropolisHastingsRandomWalkSampler(GraphSAINTSampler):
         which is denoted as 𝐵 here. Usually, 𝐵 ≥ |𝑉′| as RW-based algorithms are likely 
         to backtrack when exploring the original graph.
     """
-    def __init__(self, data, batch_size: int, budget: int,
+    def __init__(self, dataset_name, data, batch_size: int, budget: int,
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
-        data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
-        print("is undirected:", is_undirected(data['edge_index']))
+        if dataset_name == "BarabasiAlbert":
+            data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        else:
+            data['edge_index'] = add_self_loops(data['edge_index'])[0]
         super(MetropolisHastingsRandomWalkSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
@@ -73,12 +75,17 @@ class MetropolisHastingsRandomWalkWithEscapingSampler(GraphSAINTSampler):
         If the random walker chooses walk, then a neighbor of current node is chosen as the next step in the walk. 
         If the jump mode is chosen, a node is chosen with a probability distribution.
     """
-    def __init__(self, data, batch_size: int, budget: int, alpha: float,
+    def __init__(self, dataset_name, data, batch_size: int, budget: int, alpha: float,
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
         self.alpha = alpha
-        data['edge_index'] = add_self_loops(data['edge_index'])[0]
+        if dataset_name == "BarabasiAlbert":
+            data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        else:
+            data['edge_index'] = add_self_loops(data['edge_index'])[0]
+
+
         super(MetropolisHastingsRandomWalkWithEscapingSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
@@ -122,12 +129,15 @@ class RejectionControlMetropolisHastingsSampler(GraphSAINTSampler):
 
         alpha (float): A number in [0, 1]. This parameter controls whether the sampler behaves more like the simple random walk (alpha = 0) or the Metropolis-Hastings random walk (alpha = 1).
     """
-    def __init__(self, data, batch_size: int, budget: int,
+    def __init__(self, dataset_name, data, batch_size: int, budget: int,
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, alpha: float = 0.5, **kwargs):
         self.budget = budget
         self.alpha = alpha
-        data['edge_index'] = add_self_loops(data['edge_index'])[0]
+        if dataset_name == "BarabasiAlbert":
+            data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        else:
+            data['edge_index'] = add_self_loops(data['edge_index'])[0]
         super(RejectionControlMetropolisHastingsSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
@@ -165,11 +175,15 @@ class SimpleRandomWalkWithStallingSampler(GraphSAINTSampler):
         which is denoted as 𝐵 here. Usually, 𝐵 ≥ |𝑉′| as RW-based algorithms are likely 
         to backtrack when exploring the original graph.
     """
-    def __init__(self, data, batch_size: int, budget: int,
+    def __init__(self, dataset_name, data, batch_size: int, budget: int,
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
-        data['edge_index'] = add_self_loops(data['edge_index'])[0]
+        if dataset_name == "BarabasiAlbert":
+            data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        else:
+            data['edge_index'] = add_self_loops(data['edge_index'])[0]
+
         super(SimpleRandomWalkWithStallingSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
@@ -209,14 +223,15 @@ class SimpleRandomWalkWithEscapingSampler(GraphSAINTSampler):
         If the random walker chooses walk, then a neighbor of current node is chosen as the next step in the walk. 
         If the jump mode is chosen, a node is chosen with a probability distribution.
     """
-    def __init__(self, data, batch_size: int, budget: int, alpha: float,
+    def __init__(self, dataset_name, data, batch_size: int, budget: int, alpha: float,
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
         self.alpha = alpha
-        data['edge_index'] = add_self_loops(data['edge_index'])[0]
-        data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
-        print("is undirected:", is_undirected(data['edge_index']))
+        if dataset_name == "BarabasiAlbert":
+            data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        else:
+            data['edge_index'] = add_self_loops(data['edge_index'])[0]
         super(SimpleRandomWalkWithEscapingSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
                              save_dir, log, **kwargs)
@@ -253,12 +268,14 @@ class SimpleRandomWalkSampler(GraphSAINTSampler):
         which is denoted as 𝐵 here. Usually, 𝐵 ≥ |𝑉′| as RW-based algorithms are likely 
         to backtrack when exploring the original graph.
     """
-    def __init__(self, data, batch_size: int, budget: int,
+    def __init__(self, dataset_name, data, batch_size: int, budget: int,
                  num_steps: int = 1, sample_coverage: int = 0,
                  save_dir = None, log: bool = True, **kwargs):
         self.budget = budget
-        # data['edge_index'] = add_self_loops(data['edge_index'])[0]
-        data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        if dataset_name == "BarabasiAlbert":
+            data['edge_index'] = to_undirected(add_self_loops(data['edge_index'])[0])
+        else:
+            data['edge_index'] = add_self_loops(data['edge_index'])[0]
         print("is undirected:", is_undirected(data['edge_index']))
         super(SimpleRandomWalkSampler,
               self).__init__(data, batch_size, num_steps, sample_coverage,
@@ -279,7 +296,6 @@ class SimpleRandomWalkSampler(GraphSAINTSampler):
                 neighbor_idx = random.randint(0, d_i-1)
                 u_idx = neighbors.storage.col()[neighbor_idx].item()
                 start[i] = u_idx
-                    
                 node_idx.append(start[i]) 
                 
         return torch.from_numpy(np.array(node_idx))
